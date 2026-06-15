@@ -96,6 +96,15 @@ app.use('/api/v1/health', (req, res) => {
   });
 });
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Welcome to the ServeConnect API server! Everything is working correctly.',
+    health: '/api/v1/health'
+  });
+});
+
 // Handle undefined routes
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
