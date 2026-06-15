@@ -29,13 +29,14 @@ const createSendToken = async (user, statusCode, res) => {
   await user.save({ validateBeforeSave: false });
 
   // Options for cookies
+  const isSecure = process.env.NODE_ENV === 'production' || (process.env.FRONTEND_URL && process.env.FRONTEND_URL.startsWith('https'));
   const cookieOptions = {
     expires: new Date(
       Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days matching refresh token
     ),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    secure: isSecure,
+    sameSite: isSecure ? 'none' : 'lax'
   };
 
   res.cookie('refreshToken', refreshToken, cookieOptions);
@@ -117,10 +118,11 @@ exports.logout = catchAsync(async (req, res, next) => {
     await User.findOneAndUpdate({ refreshToken }, { $unset: { refreshToken: 1 } });
   }
 
+  const isSecure = process.env.NODE_ENV === 'production' || (process.env.FRONTEND_URL && process.env.FRONTEND_URL.startsWith('https'));
   res.clearCookie('refreshToken', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    secure: isSecure,
+    sameSite: isSecure ? 'none' : 'lax'
   });
 
   res.status(200).json({
@@ -243,7 +245,8 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
 
   // 3) Log details for local testing (mocking SMTP)
-  const resetURL = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
+  const cleanFrontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').trim().replace(/\/$/, '');
+  const resetURL = `${cleanFrontendUrl}/reset-password/${resetToken}`;
   
   console.log('--- PASSWORD RESET SYSTEM LOG ---');
   console.log(`To: ${user.email}`);

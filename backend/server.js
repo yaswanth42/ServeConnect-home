@@ -52,9 +52,17 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 // CORS setup
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000'];
+if (process.env.FRONTEND_URL) {
+  const cleanUrl = process.env.FRONTEND_URL.trim().replace(/\/$/, '');
+  if (!allowedOrigins.includes(cleanUrl)) allowedOrigins.push(cleanUrl);
+  const withSlash = cleanUrl + '/';
+  if (!allowedOrigins.includes(withSlash)) allowedOrigins.push(withSlash);
+}
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
